@@ -1,8 +1,8 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"unicode/utf8"
@@ -33,24 +33,35 @@ func shiftJIStoUtf8(data []byte) ([]byte, error) {
 	return b, nil
 }
 
+func showExitPrompt() {
+	fmt.Println("Press Enter to exit...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
+
+func showErrorExit(message string) {
+	fmt.Println(message)
+	showExitPrompt()
+	os.Exit(1)
+}
+
 func main() {
 	if len(os.Args) != 2 {
-		log.Fatal("Args must have 1")
+		showErrorExit("Args must have 1")
 	}
 	filename := os.Args[1]
 	if _, err := os.Stat(filename); err != nil {
-		log.Fatal("File not exists")
+		showErrorExit("File not exists")
 	}
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		log.Fatal("File read error")
+		showErrorExit("File read error")
 	}
 	outDir := filepath.Dir(filename)
 	if utf8.Valid(data) {
 		fmt.Println("Try convert from UTF-8 to Shift-JIS")
 		b, err := utf8ToShiftJIS(data)
 		if err != nil {
-			log.Fatal("Convert error")
+			showErrorExit("Convert error")
 		}
 		outFile := filepath.Join(outDir, getFileNameWithoutExt(filename)+"_sjis"+filepath.Ext(filename))
 		os.WriteFile(outFile, b, 0664)
@@ -59,10 +70,11 @@ func main() {
 		fmt.Println("Try convert from Shift-JIS to UTF-8")
 		b, err := shiftJIStoUtf8(data)
 		if err != nil {
-			log.Fatal("Convert error")
+			showErrorExit("Convert error")
 		}
 		outFile := filepath.Join(outDir, getFileNameWithoutExt(filename)+"_utf8"+filepath.Ext(filename))
 		os.WriteFile(outFile, b, 0664)
 		fmt.Println("Convert complete: " + outFile)
 	}
+	showExitPrompt()
 }
